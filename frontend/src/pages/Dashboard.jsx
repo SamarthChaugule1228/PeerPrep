@@ -51,14 +51,15 @@ const Dashboard = () => {
       console.log('Socket connected');
     });
 
-    socketRef.current.on('matched', (data) => {
-      setIsSearching(false);
-      setMatchResult(data);
-      // Automatically navigate to the interview room after a short delay
-      setTimeout(() => {
-        navigate(`/matchroom/${data.sessionId}`, { state: { partner: data.partner } });
-      }, 1500);
+   socketRef.current.on('matched', (data) => {
+  setIsSearching(false);
+  setMatchResult(data);
+  setTimeout(() => {
+    navigate(`/matchroom/${data.sessionId}`, {
+      state: { partner: data.partner, role: data.role },
     });
+  }, 1500);
+});
 
     return () => {
       if (socketRef.current) {

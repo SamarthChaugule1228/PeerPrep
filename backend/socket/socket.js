@@ -4,7 +4,7 @@ const User = require('../models/User');
 const Session = require('../models/Session');
 
 let io;
-const waitingQueue = []; // { socketId, userId, name, preferences }
+const waitingQueue = [];
 
 const initSocket = (server) => {
   io = socketIO(server, {
@@ -31,6 +31,7 @@ const initSocket = (server) => {
   io.on('connection', (socket) => {
     console.log(`User ${socket.user.name} connected: ${socket.id}`);
 
+    // ---------- FEATURE 1: MATCHING ----------
     socket.on('find-peer', async (preferences) => {
       if (preferences) {
         socket.user.preferences = preferences;
@@ -44,7 +45,6 @@ const initSocket = (server) => {
         preferences: socket.user.preferences
       };
 
-      // Remove duplicate
       const existingIndex = waitingQueue.findIndex(q => q.userId.equals(socket.user._id));
       if (existingIndex !== -1) waitingQueue.splice(existingIndex, 1);
 
@@ -53,23 +53,32 @@ const initSocket = (server) => {
 
       const match = findMatch(socket.user._id);
       if (match) {
-        // Remove both from queue
         waitingQueue.splice(waitingQueue.findIndex(q => q.userId.equals(match.user1.userId)), 1);
         waitingQueue.splice(waitingQueue.findIndex(q => q.userId.equals(match.user2.userId)), 1);
 
         try {
+          // Role assignment: first user in match object is interviewer, second is candidate
           const session = await Session.create({
             participants: [
-              { user: match.user1.userId, socketId: match.user1.socketId },
-              { user: match.user2.userId, socketId: match.user2.socketId }
+              { user: match.user1.userId, socketId: match.user1.socketId, role: 'interviewer' },
+              { user: match.user2.userId, socketId: match.user2.socketId, role: 'candidate' }
             ]
           });
 
           const partner1 = getPartnerDetails(match.user2, match.user1.preferences.identityPreference);
           const partner2 = getPartnerDetails(match.user1, match.user2.preferences.identityPreference);
 
-          io.to(match.user1.socketId).emit('matched', { sessionId: session._id, partner: partner1 });
-          io.to(match.user2.socketId).emit('matched', { sessionId: session._id, partner: partner2 });
+          // Emit matched event with sessionId, partner info, and role
+          io.to(match.user1.socketId).emit('matched', {
+            sessionId: session._id,
+            partner: partner1,
+            role: 'interviewer'
+          });
+          io.to(match.user2.socketId).emit('matched', {
+            sessionId: session._id,
+            partner: partner2,
+            role: 'candidate'
+          });
 
           console.log(`Matched: ${match.user1.name} ↔ ${match.user2.name}`);
         } catch (err) {
@@ -82,6 +91,110 @@ const initSocket = (server) => {
       removeFromQueue(socket.user._id);
     });
 
+    // ---------- FEATURE 2: INTERVIEW ROOM COLLABORATION ----------
+
+    // Join a specific session room
+    socket.on('join-room', async (sessionId) => {
+      socket.join(sessionId);
+      console.log(`${socket.user.name} joined room ${sessionId}`);
+
+      // Send current session data to the client that just joined
+      try {
+        const session = await Session.findById(sessionId);
+        if (!session) return;
+        socket.emit('session-data', {
+          question: session.question,
+          code: session.code,
+          language: session.language,
+          notes: session.notes,
+          timerDuration: session.timerDuration,
+          timerEnd: session.timerEnd,
+          status: session.status
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+    // Code changes from any user
+    socket.on('code-change', async ({ sessionId, code }) => {
+      // Broadcast to everyone else in the room
+      socket.to(sessionId).emit('code-update', code);
+      // Update DB
+      try {
+        await Session.findByIdAndUpdate(sessionId, { code });
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+    // Language change
+    socket.on('language-change', async ({ sessionId, language }) => {
+      socket.to(sessionId).emit('language-update', language);
+      try {
+        await Session.findByIdAndUpdate(sessionId, { language });
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+    // Question change
+    socket.on('question-change', async ({ sessionId, question }) => {
+      socket.to(sessionId).emit('question-update', question);
+      try {
+        await Session.findByIdAndUpdate(sessionId, { question });
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+    // Notes (whiteboard) change
+    socket.on('notes-change', async ({ sessionId, notes }) => {
+      socket.to(sessionId).emit('notes-update', notes);
+      try {
+        await Session.findByIdAndUpdate(sessionId, { notes });
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+    // Timer control: start timer (set timerEnd = now + duration)
+    socket.on('timer-start', async ({ sessionId, duration }) => {
+      const timerEnd = new Date(Date.now() + duration * 1000); // duration in seconds
+      io.to(sessionId).emit('timer-update', { timerEnd });
+      try {
+        await Session.findByIdAndUpdate(sessionId, { timerEnd, timerDuration: duration });
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+    // Stop timer (reset)
+    socket.on('timer-stop', async ({ sessionId }) => {
+      io.to(sessionId).emit('timer-update', { timerEnd: null });
+      try {
+        await Session.findByIdAndUpdate(sessionId, { timerEnd: null });
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+    // End interview
+    socket.on('end-interview', async ({ sessionId }) => {
+      io.to(sessionId).emit('interview-ended');
+      try {
+        await Session.findByIdAndUpdate(sessionId, { status: 'ended' });
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+    // Leave room
+    socket.on('leave-room', (sessionId) => {
+      socket.leave(sessionId);
+      console.log(`${socket.user.name} left room ${sessionId}`);
+    });
+
     socket.on('disconnect', () => {
       removeFromQueue(socket.user._id);
       console.log(`${socket.user.name} disconnected`);
@@ -91,6 +204,7 @@ const initSocket = (server) => {
   return io;
 };
 
+// ---------- HELPER FUNCTIONS ----------
 function findMatch(currentUserId) {
   const current = waitingQueue.find(q => q.userId.equals(currentUserId));
   if (!current) return null;
