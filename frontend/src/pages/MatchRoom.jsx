@@ -2,15 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation, Link, useNavigate } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import { io } from 'socket.io-client';
-
-const languages = ['python', 'java', 'cpp'];
+import { useWebRTC } from '../hooks/useWebRTC';
 
 const MatchRoom = () => {
   const { sessionId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const partner = location.state?.partner;
-  const role = location.state?.role || 'candidate'; // interviewer or candidate
+  const role = location.state?.role || 'candidate';
 
   const socketRef = useRef(null);
 
@@ -23,10 +22,7 @@ const MatchRoom = () => {
   const [timerEnd, setTimerEnd] = useState(null);
   const [timerDisplay, setTimerDisplay] = useState('');
 
-  const editorRef = useRef(null);
-  const notesRef = useRef(null);
-
-  // Connect to socket & join room
+  // Connect socket and join room
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -34,26 +30,23 @@ const MatchRoom = () => {
     socketRef.current = io('http://localhost:5000', { auth: { token } });
 
     socketRef.current.on('connect', () => {
-      console.log('Socket connected');
       socketRef.current.emit('join-room', sessionId);
     });
 
-    // Listen for initial session data
     socketRef.current.on('session-data', (data) => {
       setCode(data.code);
       setLanguage(data.language);
       setQuestion(data.question);
       setNotes(data.notes);
       setStatus(data.status);
-      if (data.timerEnd) setTimerEnd(data.timerEnd);
+      if (data.timerEnd) setTimerEnd(new Date(data.timerEnd));
     });
 
-    // Real‑time updates from partner
-    socketRef.current.on('code-update', (newCode) => setCode(newCode));
-    socketRef.current.on('language-update', (newLang) => setLanguage(newLang));
-    socketRef.current.on('question-update', (newQ) => setQuestion(newQ));
-    socketRef.current.on('notes-update', (newNotes) => setNotes(newNotes));
-    socketRef.current.on('timer-update', ({ timerEnd: end }) => setTimerEnd(end));
+    socketRef.current.on('code-update', setCode);
+    socketRef.current.on('language-update', setLanguage);
+    socketRef.current.on('question-update', setQuestion);
+    socketRef.current.on('notes-update', setNotes);
+    socketRef.current.on('timer-update', ({ timerEnd: end }) => setTimerEnd(end ? new Date(end) : null));
     socketRef.current.on('interview-ended', () => setStatus('ended'));
 
     return () => socketRef.current?.disconnect();
@@ -61,13 +54,9 @@ const MatchRoom = () => {
 
   // Timer countdown
   useEffect(() => {
-    if (!timerEnd) {
-      setTimerDisplay('');
-      return;
-    }
-    const updateTimer = () => {
-      const now = Date.now();
-      const diff = new Date(timerEnd).getTime() - now;
+    if (!timerEnd) { setTimerDisplay(''); return; }
+    const update = () => {
+      const diff = timerEnd.getTime() - Date.now();
       if (diff <= 0) {
         setTimerDisplay('00:00');
         setStatus('ended');
@@ -77,76 +66,92 @@ const MatchRoom = () => {
       const secs = Math.floor((diff % 60000) / 1000);
       setTimerDisplay(`${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`);
     };
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
+    update();
+    const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
   }, [timerEnd]);
 
-  // Emit code changes (debounce-like via editor onChange)
-  const handleCodeChange = (value) => {
-    setCode(value);
-    socketRef.current?.emit('code-change', { sessionId, code: value });
-  };
-
-  // Emit language change
-  const handleLanguageChange = (newLang) => {
-    setLanguage(newLang);
-    socketRef.current?.emit('language-change', { sessionId, language: newLang });
-  };
-
-  // Emit question change (only interviewer can change)
-  const handleQuestionChange = (e) => {
-    const val = e.target.value;
-    setQuestion(val);
-    socketRef.current?.emit('question-change', { sessionId, question: val });
-  };
-
-  // Notes change
-  const handleNotesChange = (e) => {
-    const val = e.target.value;
-    setNotes(val);
-    socketRef.current?.emit('notes-change', { sessionId, notes: val });
-  };
-
-  // Timer controls (interviewer only)
-  const startTimer = (mins) => {
-    const duration = mins * 60;
-    socketRef.current?.emit('timer-start', { sessionId, duration });
-  };
-  const stopTimer = () => {
-    socketRef.current?.emit('timer-stop', { sessionId });
-  };
-
-  // End interview (either participant can end)
+  // Emitters
+  const emitCode = (val) => socketRef.current?.emit('code-change', { sessionId, code: val });
+  const emitLang = (lang) => socketRef.current?.emit('language-change', { sessionId, language: lang });
+  const emitQuestion = (q) => socketRef.current?.emit('question-change', { sessionId, question: q });
+  const emitNotes = (n) => socketRef.current?.emit('notes-change', { sessionId, notes: n });
+  const startTimer = (mins) => socketRef.current?.emit('timer-start', { sessionId, duration: mins * 60 });
+  const stopTimer = () => socketRef.current?.emit('timer-stop', { sessionId });
   const endInterview = () => {
-    if (window.confirm('End the interview?')) {
-      socketRef.current?.emit('end-interview', { sessionId });
-    }
+    if (window.confirm('End the interview?')) socketRef.current?.emit('end-interview', { sessionId });
   };
-
   const leaveRoom = () => {
     socketRef.current?.emit('leave-room', sessionId);
     navigate('/dashboard');
   };
+
+  // ---------- WebRTC ----------
+  const {
+    localStream,
+    remoteStream,
+    connectionStatus,
+    micOn,
+    camOn,
+    screenSharing,
+    toggleMic,
+    toggleCam,
+    startScreenShare,
+    stopScreenShare,
+  } = useWebRTC(socketRef, sessionId, role === 'interviewer');
+
+  // Video refs for autoplay
+  const localVideoRef = useRef(null);
+  const remoteVideoRef = useRef(null);
+  const remoteContainerRef = useRef(null);   // for full‑screen
+
+  // Detect remote screen share
+  const [isRemoteScreen, setIsRemoteScreen] = useState(false);
+  useEffect(() => {
+    if (remoteStream) {
+      const videoTrack = remoteStream.getVideoTracks()[0];
+      if (videoTrack) {
+        const label = videoTrack.label || '';
+        setIsRemoteScreen(label.includes('screen') || label.includes('window'));
+      }
+    } else {
+      setIsRemoteScreen(false);
+    }
+  }, [remoteStream]);
+
+  // Full‑screen toggle
+  const toggleFullscreen = () => {
+    if (!remoteContainerRef.current) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      remoteContainerRef.current.requestFullscreen();
+    }
+  };
+
+  useEffect(() => {
+    if (localVideoRef.current && localStream) localVideoRef.current.srcObject = localStream;
+  }, [localStream]);
+
+  useEffect(() => {
+    if (remoteVideoRef.current && remoteStream) remoteVideoRef.current.srcObject = remoteStream;
+  }, [remoteStream]);
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       {/* Top bar */}
       <header className="bg-white shadow-sm px-4 py-3 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Link to="/dashboard" className="text-gray-500 hover:text-gray-700 transition">
-            ← Dashboard
-          </Link>
+          <Link to="/dashboard" className="text-gray-500 hover:text-gray-700 transition">← Dashboard</Link>
           <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
             Interview Room
           </h1>
           <span className="text-sm text-gray-500">
-            {role === 'interviewer' ? 'You are the interviewer' : 'You are the candidate'}
+            {role === 'interviewer' ? 'Interviewer' : 'Candidate'}
           </span>
         </div>
 
         <div className="flex items-center gap-4">
-          {/* Timer display & controls */}
           {timerDisplay && (
             <div className={`font-mono text-xl font-bold px-3 py-1 rounded-lg ${status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
               {timerDisplay}
@@ -154,9 +159,9 @@ const MatchRoom = () => {
           )}
           {role === 'interviewer' && status === 'active' && (
             <div className="flex items-center gap-2">
-              <button onClick={() => startTimer(15)} className="text-xs bg-blue-500 text-white px-3 py-1 rounded-full hover:bg-blue-600">15 min</button>
-              <button onClick={() => startTimer(30)} className="text-xs bg-blue-500 text-white px-3 py-1 rounded-full hover:bg-blue-600">30 min</button>
-              <button onClick={() => startTimer(45)} className="text-xs bg-blue-500 text-white px-3 py-1 rounded-full hover:bg-blue-600">45 min</button>
+              <button onClick={() => startTimer(15)} className="text-xs bg-blue-500 text-white px-3 py-1 rounded-full hover:bg-blue-600">15m</button>
+              <button onClick={() => startTimer(30)} className="text-xs bg-blue-500 text-white px-3 py-1 rounded-full hover:bg-blue-600">30m</button>
+              <button onClick={() => startTimer(45)} className="text-xs bg-blue-500 text-white px-3 py-1 rounded-full hover:bg-blue-600">45m</button>
               <button onClick={stopTimer} className="text-xs bg-gray-500 text-white px-3 py-1 rounded-full hover:bg-gray-600">Stop</button>
             </div>
           )}
@@ -166,92 +171,144 @@ const MatchRoom = () => {
         </div>
       </header>
 
-      {/* Main content */}
+      {/* Main content: three columns on large screens */}
       <div className="flex-1 flex flex-col lg:flex-row gap-4 p-4">
-        {/* Left: Question + Notes/Whiteboard */}
-        <div className="lg:w-1/3 flex flex-col gap-4">
-          {/* Question Panel */}
-          <div className="bg-white rounded-xl shadow p-4 flex flex-col h-64 lg:h-1/2">
+        {/* Left: Question + Notes */}
+        <div className="lg:w-1/4 flex flex-col gap-4">
+          <div className="bg-white rounded-xl shadow p-4 flex flex-col h-56">
             <h2 className="font-semibold text-gray-700 mb-2">📋 Question</h2>
             {role === 'interviewer' ? (
               <textarea
                 value={question}
-                onChange={handleQuestionChange}
-                placeholder="Type or paste the interview question..."
+                onChange={(e) => { setQuestion(e.target.value); emitQuestion(e.target.value); }}
+                placeholder="Type the question..."
                 className="w-full flex-1 border border-gray-200 rounded-lg p-3 resize-none focus:ring-2 focus:ring-indigo-400 outline-none"
               />
             ) : (
-              <div className="flex-1 border border-gray-200 rounded-lg p-3 overflow-y-auto bg-gray-50 whitespace-pre-wrap">
-                {question || 'Waiting for interviewer to set a question...'}
+              <div className="flex-1 border border-gray-200 rounded-lg p-3 overflow-y-auto bg-gray-50 whitespace-pre-wrap text-sm">
+                {question || 'Waiting for the interviewer to set a question...'}
               </div>
             )}
           </div>
-
-          {/* Whiteboard/Notes */}
-          <div className="bg-white rounded-xl shadow p-4 flex flex-col h-64 lg:h-1/2">
-            <h2 className="font-semibold text-gray-700 mb-2">📝 Notes / Whiteboard</h2>
+          <div className="bg-white rounded-xl shadow p-4 flex flex-col h-56">
+            <h2 className="font-semibold text-gray-700 mb-2">📝 Notes</h2>
             <textarea
               value={notes}
-              onChange={handleNotesChange}
-              placeholder="Jot down your thoughts, hints, or solutions..."
+              onChange={(e) => { setNotes(e.target.value); emitNotes(e.target.value); }}
+              placeholder="Write your thoughts..."
               className="w-full flex-1 border border-gray-200 rounded-lg p-3 resize-none focus:ring-2 focus:ring-indigo-400 outline-none"
             />
           </div>
         </div>
 
-        {/* Right: Code Editor */}
-        <div className="lg:w-2/3 flex flex-col gap-4">
-          {/* Language selector & partner info */}
+        {/* Center: Code Editor */}
+        <div className="lg:w-2/4 flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600">Language:</label>
-              <select
-                value={language}
-                onChange={(e) => handleLanguageChange(e.target.value)}
-                className="border border-gray-300 rounded-lg px-3 py-1 text-sm"
-              >
-                <option value="python">Python</option>
-                <option value="java">Java</option>
-                <option value="cpp">C++</option>
-              </select>
-            </div>
+            <select
+              value={language}
+              onChange={(e) => { setLanguage(e.target.value); emitLang(e.target.value); }}
+              className="border border-gray-300 rounded-lg px-3 py-1 text-sm"
+            >
+              <option value="python">Python</option>
+              <option value="java">Java</option>
+              <option value="cpp">C++</option>
+            </select>
             <div className="text-sm text-gray-500">
               Partner: {partner?.anonymous ? 'Anonymous' : partner?.name || 'Unknown'}
             </div>
           </div>
-
-          {/* Editor */}
           <div className="bg-white rounded-xl shadow flex-1 overflow-hidden">
             {status === 'active' ? (
               <Editor
                 height="100%"
                 language={language === 'cpp' ? 'cpp' : language}
                 value={code}
-                onChange={handleCodeChange}
+                onChange={(val) => { setCode(val); emitCode(val); }}
                 theme="vs-dark"
-                options={{
-                  fontSize: 14,
-                  minimap: { enabled: false },
-                  lineNumbers: 'on',
-                  automaticLayout: true,
-                }}
-                onMount={(editor) => (editorRef.current = editor)}
+                options={{ fontSize: 14, minimap: { enabled: false }, lineNumbers: 'on', automaticLayout: true }}
               />
             ) : (
               <div className="flex items-center justify-center h-full bg-gray-900 text-white text-xl">
-                Interview has ended. Thank you!
+                Interview ended.
               </div>
             )}
           </div>
         </div>
+
+        {/* Right: Video panels and controls */}
+        <div className="lg:w-1/4 flex flex-col gap-4">
+          {/* Video panels */}
+          <div className="grid grid-cols-1 gap-2 flex-1 relative">
+            {/* Local video – always small */}
+            <div className="relative bg-black rounded-xl shadow overflow-hidden aspect-video">
+              <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover mirror" />
+              <span className="absolute bottom-2 left-2 text-white text-xs bg-black/50 px-2 py-0.5 rounded">You</span>
+            </div>
+
+            {/* Remote video – grows when screen is shared */}
+            <div
+              className={`relative bg-black rounded-xl shadow overflow-hidden transition-all duration-300 ${
+                isRemoteScreen ? 'aspect-auto h-full max-h-[500px]' : 'aspect-video'
+              }`}
+              ref={remoteContainerRef}
+            >
+              <video
+                ref={remoteVideoRef}
+                autoPlay
+                playsInline
+                className="w-full h-full object-contain"
+                onClick={toggleFullscreen}
+                style={{ cursor: 'pointer' }}
+                title="Click to view full screen"
+              />
+              <span className="absolute bottom-2 left-2 text-white text-xs bg-black/50 px-2 py-0.5 rounded">
+                {partner?.anonymous ? 'Partner' : partner?.name || 'Partner'}
+                {isRemoteScreen && ' (screen)'}
+              </span>
+              {/* Full‑screen button */}
+              <button
+                onClick={toggleFullscreen}
+                className="absolute top-2 right-2 bg-black/50 text-white p-1 rounded hover:bg-black/70"
+                title="Full screen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+
+          {/* Call controls */}
+          <div className="bg-white rounded-xl shadow p-3 flex flex-wrap items-center justify-center gap-3">
+            <button
+              onClick={toggleMic}
+              className={`p-2 rounded-full ${micOn ? 'bg-gray-100 text-gray-700' : 'bg-red-100 text-red-600'}`}
+              title={micOn ? 'Mute microphone' : 'Unmute microphone'}
+            >
+              {micOn ? '🎤' : '🔇'}
+            </button>
+            <button
+              onClick={toggleCam}
+              className={`p-2 rounded-full ${camOn ? 'bg-gray-100 text-gray-700' : 'bg-red-100 text-red-600'}`}
+              title={camOn ? 'Turn off camera' : 'Turn on camera'}
+            >
+              {camOn ? '📹' : '📷'}
+            </button>
+            <button
+              onClick={screenSharing ? stopScreenShare : startScreenShare}
+              className={`p-2 rounded-full ${screenSharing ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-700'}`}
+              title={screenSharing ? 'Stop screen share' : 'Share screen'}
+            >
+              {screenSharing ? '🖥️' : '📺'}
+            </button>
+            <div className="text-xs text-gray-500 ml-2">
+              {connectionStatus === 'connected' ? '🟢 Connected' : connectionStatus === 'connecting' ? '🟡 Connecting...' : '🔴 Disconnected'}
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Footer / status */}
+      {/* Footer */}
       <div className="bg-white px-4 py-2 text-sm text-gray-500 border-t">
-        Session ID: {sessionId} | Status: {status === 'active' ? '🟢 In Progress' : '🔴 Ended'}
-        {!timerDisplay && status === 'active' && role === 'interviewer' && (
-          <span className="ml-4 text-blue-600">You can start the timer above.</span>
-        )}
+        Session: {sessionId} | {status === 'active' ? '🟢 In Progress' : '🔴 Ended'}
         <button onClick={leaveRoom} className="ml-4 text-indigo-600 hover:underline">Leave Room</button>
       </div>
     </div>

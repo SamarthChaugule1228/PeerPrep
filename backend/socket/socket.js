@@ -57,7 +57,6 @@ const initSocket = (server) => {
         waitingQueue.splice(waitingQueue.findIndex(q => q.userId.equals(match.user2.userId)), 1);
 
         try {
-          // Role assignment: first user in match object is interviewer, second is candidate
           const session = await Session.create({
             participants: [
               { user: match.user1.userId, socketId: match.user1.socketId, role: 'interviewer' },
@@ -68,7 +67,6 @@ const initSocket = (server) => {
           const partner1 = getPartnerDetails(match.user2, match.user1.preferences.identityPreference);
           const partner2 = getPartnerDetails(match.user1, match.user2.preferences.identityPreference);
 
-          // Emit matched event with sessionId, partner info, and role
           io.to(match.user1.socketId).emit('matched', {
             sessionId: session._id,
             partner: partner1,
@@ -92,13 +90,10 @@ const initSocket = (server) => {
     });
 
     // ---------- FEATURE 2: INTERVIEW ROOM COLLABORATION ----------
-
-    // Join a specific session room
     socket.on('join-room', async (sessionId) => {
       socket.join(sessionId);
       console.log(`${socket.user.name} joined room ${sessionId}`);
 
-      // Send current session data to the client that just joined
       try {
         const session = await Session.findById(sessionId);
         if (!session) return;
@@ -116,83 +111,58 @@ const initSocket = (server) => {
       }
     });
 
-    // Code changes from any user
     socket.on('code-change', async ({ sessionId, code }) => {
-      // Broadcast to everyone else in the room
       socket.to(sessionId).emit('code-update', code);
-      // Update DB
-      try {
-        await Session.findByIdAndUpdate(sessionId, { code });
-      } catch (err) {
-        console.error(err);
-      }
+      await Session.findByIdAndUpdate(sessionId, { code });
     });
 
-    // Language change
     socket.on('language-change', async ({ sessionId, language }) => {
       socket.to(sessionId).emit('language-update', language);
-      try {
-        await Session.findByIdAndUpdate(sessionId, { language });
-      } catch (err) {
-        console.error(err);
-      }
+      await Session.findByIdAndUpdate(sessionId, { language });
     });
 
-    // Question change
     socket.on('question-change', async ({ sessionId, question }) => {
       socket.to(sessionId).emit('question-update', question);
-      try {
-        await Session.findByIdAndUpdate(sessionId, { question });
-      } catch (err) {
-        console.error(err);
-      }
+      await Session.findByIdAndUpdate(sessionId, { question });
     });
 
-    // Notes (whiteboard) change
     socket.on('notes-change', async ({ sessionId, notes }) => {
       socket.to(sessionId).emit('notes-update', notes);
-      try {
-        await Session.findByIdAndUpdate(sessionId, { notes });
-      } catch (err) {
-        console.error(err);
-      }
+      await Session.findByIdAndUpdate(sessionId, { notes });
     });
 
-    // Timer control: start timer (set timerEnd = now + duration)
     socket.on('timer-start', async ({ sessionId, duration }) => {
-      const timerEnd = new Date(Date.now() + duration * 1000); // duration in seconds
+      const timerEnd = new Date(Date.now() + duration * 1000);
       io.to(sessionId).emit('timer-update', { timerEnd });
-      try {
-        await Session.findByIdAndUpdate(sessionId, { timerEnd, timerDuration: duration });
-      } catch (err) {
-        console.error(err);
-      }
+      await Session.findByIdAndUpdate(sessionId, { timerEnd, timerDuration: duration });
     });
 
-    // Stop timer (reset)
     socket.on('timer-stop', async ({ sessionId }) => {
       io.to(sessionId).emit('timer-update', { timerEnd: null });
-      try {
-        await Session.findByIdAndUpdate(sessionId, { timerEnd: null });
-      } catch (err) {
-        console.error(err);
-      }
+      await Session.findByIdAndUpdate(sessionId, { timerEnd: null });
     });
 
-    // End interview
     socket.on('end-interview', async ({ sessionId }) => {
       io.to(sessionId).emit('interview-ended');
-      try {
-        await Session.findByIdAndUpdate(sessionId, { status: 'ended' });
-      } catch (err) {
-        console.error(err);
-      }
+      await Session.findByIdAndUpdate(sessionId, { status: 'ended' });
     });
 
-    // Leave room
     socket.on('leave-room', (sessionId) => {
       socket.leave(sessionId);
       console.log(`${socket.user.name} left room ${sessionId}`);
+    });
+
+    // ---------- FEATURE 3: WEBRTC SIGNALLING ----------
+    socket.on('offer', ({ sessionId, offer }) => {
+      socket.to(sessionId).emit('offer', offer);
+    });
+
+    socket.on('answer', ({ sessionId, answer }) => {
+      socket.to(sessionId).emit('answer', answer);
+    });
+
+    socket.on('ice-candidate', ({ sessionId, candidate }) => {
+      socket.to(sessionId).emit('ice-candidate', candidate);
     });
 
     socket.on('disconnect', () => {
