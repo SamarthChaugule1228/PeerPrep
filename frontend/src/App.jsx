@@ -1,6 +1,9 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
+import Header from './components/Header';
+import Footer from './components/Footer';
+import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -8,29 +11,34 @@ import MatchRoom from './pages/MatchRoom';
 
 const App = () => {
   const { user, loading } = useAuth();
+  const location = useLocation();
+
+  // Pages where header/footer should be hidden (full‑screen interview room)
+  const hideLayout = location.pathname.startsWith('/matchroom');
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
         <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <Routes>
-      <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
-      <Route path="/register" element={!user ? <Register /> : <Navigate to="/dashboard" />} />
-      <Route
-        path="/dashboard"
-        element={user ? <Dashboard /> : <Navigate to="/login" />}
-      />
-      <Route
-        path="/matchroom/:sessionId"
-        element={user ? <MatchRoom /> : <Navigate to="/login" />}
-      />
-      <Route path="*" element={<Navigate to={user ? '/dashboard' : '/login'} />} />
-    </Routes>
+    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors">
+      {!hideLayout && <Header />}
+      <main className="flex-1">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
+          <Route path="/register" element={!user ? <Register /> : <Navigate to="/dashboard" />} />
+          <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
+          <Route path="/matchroom/:sessionId" element={user ? <MatchRoom /> : <Navigate to="/login" />} />
+          <Route path="*" element={<Navigate to={user ? '/dashboard' : '/'} />} />
+        </Routes>
+      </main>
+      {!hideLayout && <Footer />}
+    </div>
   );
 };
 
