@@ -8,12 +8,14 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import MatchRoom from './pages/MatchRoom';
+import InterviewExperiences from './pages/InterviewExperiences';
+import ExperienceDetail from './pages/ExperienceDetail';
+import Profile from './pages/Profile';            // <-- new import
 
 const App = () => {
   const { user, loading } = useAuth();
   const location = useLocation();
 
-  // Pages where header/footer should be hidden (full‑screen interview room)
   const hideLayout = location.pathname.startsWith('/matchroom');
 
   if (loading) {
@@ -33,7 +35,10 @@ const App = () => {
           <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
           <Route path="/register" element={!user ? <Register /> : <Navigate to="/dashboard" />} />
           <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
+          <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" />} />   {/* new protected route */}
           <Route path="/matchroom/:sessionId" element={user ? <MatchRoom /> : <Navigate to="/login" />} />
+          <Route path="/experiences" element={<InterviewExperiences />} />
+          <Route path="/experiences/:id" element={<ExperienceDetail />} />
           <Route path="*" element={<Navigate to={user ? '/dashboard' : '/'} />} />
         </Routes>
       </main>

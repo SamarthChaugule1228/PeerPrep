@@ -24,7 +24,8 @@ app.get('/', (req, res) => {
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
-app.use('/api/feedback', require('./routes/feedback'));   // <-- Feedback route added
+app.use('/api/feedback', require('./routes/feedback'));
+app.use('/api/experiences', require('./routes/experiences'));   // <-- Experiences route added
 
 const server = http.createServer(app);
 

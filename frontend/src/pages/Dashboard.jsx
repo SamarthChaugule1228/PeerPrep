@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { io } from 'socket.io-client';
-import api from '../services/api';          // <-- added
+import api from '../services/api';
+// import ProfileForm from '../components/ProfileForm';    // <-- added
 import BACKEND_URL from '../config';
 
 const interviewTypes = ['DSA', 'HR', 'CS Fundamentals', 'System Design', 'Resume Discussion'];
@@ -26,7 +27,7 @@ const Dashboard = () => {
 
   const [isSearching, setIsSearching] = useState(false);
   const [matchResult, setMatchResult] = useState(null);
-  const [stats, setStats] = useState(null);          // <-- added
+  const [stats, setStats] = useState(null);
 
   // Load user preferences when available
   useEffect(() => {
@@ -55,7 +56,7 @@ const Dashboard = () => {
     if (user) {
       fetchStats();
     }
-  }, [user]);                                    // <-- added
+  }, [user]);
 
   // Socket connection setup
   useEffect(() => {
@@ -78,7 +79,7 @@ const Dashboard = () => {
           state: {
             partner: data.partner,
             role: data.role,
-            partnerUserId: data.partnerUserId   // already added
+            partnerUserId: data.partnerUserId
           },
         });
       }, 1500);
@@ -329,6 +330,20 @@ const Dashboard = () => {
             <li>• Once matched, you'll be taken to a shared coding room</li>
           </ul>
         </div>
+
+        {/* Your Profile (display only if any field is filled) */}
+        {user && (user.college || user.degree || user.branch || user.year || user.graduationYear) && (
+          <div className="mt-8 bg-white dark:bg-slate-900 rounded-2xl shadow p-6 border border-gray-100 dark:border-slate-800 transition-colors">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">Your Profile</h3>
+            <div className="grid grid-cols-2 gap-2 text-sm text-gray-600 dark:text-gray-400">
+              {user.college && <p><span className="font-medium">College:</span> {user.college}</p>}
+              {user.degree && <p><span className="font-medium">Degree:</span> {user.degree}</p>}
+              {user.branch && <p><span className="font-medium">Branch:</span> {user.branch}</p>}
+              {user.year && <p><span className="font-medium">Year:</span> {user.year}</p>}
+              {user.graduationYear && <p><span className="font-medium">Graduation Year:</span> {user.graduationYear}</p>}
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

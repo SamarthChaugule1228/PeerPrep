@@ -73,4 +73,29 @@ router.put('/preferences', auth, async (req, res) => {
   }
 });
 
+// @route   PUT /api/auth/profile
+// @desc    Update user profile (college, degree, branch, year, graduationYear)
+router.put('/profile', auth, async (req, res) => {
+  try {
+    const { college, degree, branch, year, graduationYear } = req.body;
+    const updateFields = {};
+    if (college !== undefined) updateFields.college = college;
+    if (degree !== undefined) updateFields.degree = degree;
+    if (branch !== undefined) updateFields.branch = branch;
+    if (year !== undefined) updateFields.year = year;
+    if (graduationYear !== undefined) updateFields.graduationYear = graduationYear;
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { $set: updateFields },
+      { new: true }
+    ).select('-password');
+
+    res.json(user);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
 module.exports = router;

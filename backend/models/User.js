@@ -38,6 +38,12 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  // New profile fields
+  college: { type: String, default: '' },
+  degree: { type: String, default: '' },
+  branch: { type: String, default: '' },
+  year: { type: String, enum: ['TE', 'BE', 'Other', ''], default: '' },
+  graduationYear: { type: Number, default: null },
   preferences: {
     type: preferencesSchema,
     default: () => ({})
