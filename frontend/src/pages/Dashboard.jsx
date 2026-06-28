@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { io } from 'socket.io-client';
+import api from '../services/api';          // <-- added
 import BACKEND_URL from '../config';
 
 const interviewTypes = ['DSA', 'HR', 'CS Fundamentals', 'System Design', 'Resume Discussion'];
@@ -25,6 +26,7 @@ const Dashboard = () => {
 
   const [isSearching, setIsSearching] = useState(false);
   const [matchResult, setMatchResult] = useState(null);
+  const [stats, setStats] = useState(null);          // <-- added
 
   // Load user preferences when available
   useEffect(() => {
@@ -39,12 +41,28 @@ const Dashboard = () => {
     }
   }, [user]);
 
+  // Fetch feedback stats when user is available
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await api.get('/feedback/stats');
+        setStats(res.data);
+      } catch (err) {
+        console.error('Failed to fetch stats:', err);
+      }
+    };
+
+    if (user) {
+      fetchStats();
+    }
+  }, [user]);                                    // <-- added
+
   // Socket connection setup
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
 
-    socketRef.current = io(BACKEND_URL, {   // <-- using BACKEND_URL from config
+    socketRef.current = io(BACKEND_URL, {   // using BACKEND_URL from config
       auth: { token },
     });
 
@@ -57,7 +75,11 @@ const Dashboard = () => {
       setMatchResult(data);
       setTimeout(() => {
         navigate(`/matchroom/${data.sessionId}`, {
-          state: { partner: data.partner, role: data.role },
+          state: {
+            partner: data.partner,
+            role: data.role,
+            partnerUserId: data.partnerUserId   // already added
+          },
         });
       }, 1500);
     });
@@ -111,6 +133,28 @@ const Dashboard = () => {
             Set your preferences and get matched instantly
           </p>
         </div>
+
+        {/* Feedback Stats */}
+        {stats && stats.count > 0 && (
+          <div className="mb-8 bg-white dark:bg-slate-900 rounded-2xl shadow p-5 border border-gray-100 dark:border-slate-800 text-center transition-colors">
+            <h3 className="font-semibold text-gray-800 dark:text-white mb-3">Your Ratings</h3>
+            <div className="flex justify-around text-sm text-gray-600 dark:text-gray-400">
+              <div>
+                <span className="block text-yellow-500 text-xl">★</span>
+                Communication: {stats.avgCommunication}
+              </div>
+              <div>
+                <span className="block text-yellow-500 text-xl">★</span>
+                Technical: {stats.avgTechnical}
+              </div>
+              <div>
+                <span className="block text-yellow-500 text-xl">★</span>
+                Overall: {stats.avgOverall}
+              </div>
+            </div>
+            <p className="text-xs text-gray-400 mt-2">{stats.count} session(s) rated</p>
+          </div>
+        )}
 
         {/* Match Result Popup */}
         {matchResult && (

@@ -22,7 +22,9 @@ app.get('/', (req, res) => {
   res.send('API running');
 });
 
+// Routes
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/feedback', require('./routes/feedback'));   // <-- Feedback route added
 
 const server = http.createServer(app);
 
@@ -35,7 +37,6 @@ try {
 
 const PORT = process.env.PORT || 5000;
 
-// Explicitly bind to 0.0.0.0
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on 0.0.0.0:${PORT}`);
 });

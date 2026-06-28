@@ -3,6 +3,7 @@ import { useParams, useLocation, Link, useNavigate } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import { io } from 'socket.io-client';
 import { useWebRTC } from '../hooks/useWebRTC';
+import FeedbackModal from '../components/FeedbackModal';   // <-- added
 import BACKEND_URL from '../config';
 
 const MatchRoom = () => {
@@ -11,6 +12,7 @@ const MatchRoom = () => {
   const navigate = useNavigate();
   const partner = location.state?.partner;
   const role = location.state?.role || 'candidate';
+  const partnerUserId = location.state?.partnerUserId;   // <-- added
 
   const socketRef = useRef(null);
 
@@ -22,6 +24,9 @@ const MatchRoom = () => {
   const [status, setStatus] = useState('active');
   const [timerEnd, setTimerEnd] = useState(null);
   const [timerDisplay, setTimerDisplay] = useState('');
+
+  // Feedback modal state
+  const [showFeedback, setShowFeedback] = useState(false);   // <-- added
 
   // Connect socket and join room
   useEffect(() => {
@@ -49,6 +54,11 @@ const MatchRoom = () => {
     socketRef.current.on('notes-update', setNotes);
     socketRef.current.on('timer-update', ({ timerEnd: end }) => setTimerEnd(end ? new Date(end) : null));
     socketRef.current.on('interview-ended', () => setStatus('ended'));
+
+    // Listen for show-feedback event from the server
+    socketRef.current.on('show-feedback', () => {
+      setShowFeedback(true);   // <-- added
+    });
 
     return () => socketRef.current?.disconnect();
   }, [sessionId]);
@@ -84,6 +94,12 @@ const MatchRoom = () => {
   };
   const leaveRoom = () => {
     socketRef.current?.emit('leave-room', sessionId);
+    navigate('/dashboard');
+  };
+
+  // Feedback modal close handler
+  const handleFeedbackClose = () => {   // <-- added
+    setShowFeedback(false);
     navigate('/dashboard');
   };
 
@@ -312,6 +328,15 @@ const MatchRoom = () => {
         Session: {sessionId} | {status === 'active' ? '🟢 In Progress' : '🔴 Ended'}
         <button onClick={leaveRoom} className="ml-4 text-indigo-600 dark:text-indigo-400 hover:underline">Leave Room</button>
       </div>
+
+      {/* Feedback Modal */}
+      {showFeedback && (
+        <FeedbackModal
+          sessionId={sessionId}
+          partnerUserId={partnerUserId}
+          onClose={handleFeedbackClose}
+        />
+      )}
     </div>
   );
 };

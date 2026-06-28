@@ -67,15 +67,18 @@ const initSocket = (server) => {
           const partner1 = getPartnerDetails(match.user2, match.user1.preferences.identityPreference);
           const partner2 = getPartnerDetails(match.user1, match.user2.preferences.identityPreference);
 
+          // Emit matched with partnerUserId
           io.to(match.user1.socketId).emit('matched', {
             sessionId: session._id,
             partner: partner1,
-            role: 'interviewer'
+            role: 'interviewer',
+            partnerUserId: match.user2.userId   // <-- added
           });
           io.to(match.user2.socketId).emit('matched', {
             sessionId: session._id,
             partner: partner2,
-            role: 'candidate'
+            role: 'candidate',
+            partnerUserId: match.user1.userId   // <-- added
           });
 
           console.log(`Matched: ${match.user1.name} ↔ ${match.user2.name}`);
@@ -142,8 +145,10 @@ const initSocket = (server) => {
       await Session.findByIdAndUpdate(sessionId, { timerEnd: null });
     });
 
+    // Updated end-interview handler
     socket.on('end-interview', async ({ sessionId }) => {
       io.to(sessionId).emit('interview-ended');
+      io.to(sessionId).emit('show-feedback');   // <-- added
       await Session.findByIdAndUpdate(sessionId, { status: 'ended' });
     });
 
