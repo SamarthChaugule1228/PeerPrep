@@ -1,4 +1,4 @@
-````markdown
+markdown
 # PeerPrep 🚀
 
 [![MERN](https://img.shields.io/badge/Stack-MERN-brightgreen)](https://www.mongodb.com/mern-stack)
@@ -242,4 +242,3 @@ This project is [MIT](LICENSE) licensed.
 ---
 
 Made with ❤️ by [Samarth Chaugule](https://github.com/SamarthChaugule1228)
-````
