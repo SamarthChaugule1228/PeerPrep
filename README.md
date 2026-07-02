@@ -1,4 +1,3 @@
-markdown
 # PeerPrep 🚀
 
 [![MERN](https://img.shields.io/badge/Stack-MERN-brightgreen)](https://www.mongodb.com/mern-stack)
