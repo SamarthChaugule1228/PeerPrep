@@ -92,6 +92,31 @@ export const useWebRTC = (socketRef, sessionId, isInitiator) => {
     socketRef.current.emit('offer', { sessionId, offer });
   }, [createPeer, sessionId, socketRef]);
 
+  const stopAllMedia = useCallback(() => {
+    if (peerRef.current) {
+      peerRef.current.close();
+      peerRef.current = null;
+    }
+
+    if (screenTrackRef.current) {
+      screenTrackRef.current.stop();
+      screenTrackRef.current = null;
+    }
+
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(track => track.stop());
+      localStreamRef.current = null;
+    }
+
+    setLocalStream(null);
+    setRemoteStream(null);
+    setMicOn(false);
+    setCamOn(false);
+    setScreenSharing(false);
+    setConnectionStatus('disconnected');
+    setMediaError(null);
+  }, []);
+
   // Listen for signalling
   useEffect(() => {
     if (!socketRef.current) return;
@@ -142,13 +167,9 @@ export const useWebRTC = (socketRef, sessionId, isInitiator) => {
       socket.off('answer', handleAnswer);
       socket.off('ice-candidate', handleIceCandidate);
       clearTimeout(callTimeout);
-      if (peerRef.current) peerRef.current.close();
-      if (localStreamRef.current) {
-        localStreamRef.current.getTracks().forEach(track => track.stop());
-        localStreamRef.current = null;
-      }
+      stopAllMedia();
     };
-  }, [socketRef, sessionId, isInitiator, startMedia, createPeer, initiateCall]);
+  }, [socketRef, sessionId, isInitiator, startMedia, createPeer, initiateCall, stopAllMedia]);
 
   // Mic / cam toggles
   const toggleMic = () => {
@@ -209,9 +230,9 @@ export const useWebRTC = (socketRef, sessionId, isInitiator) => {
         const stream = localStreamRef.current;
         const videoTrack = stream ? stream.getVideoTracks()[0] : null;
         if (videoTrack) {
-          sender.replaceTrack(videoTrack);
+          sender.replaceTrack(videoTrack).catch(console.error);
         } else {
-          sender.replaceTrack(null); // sends black/no video, remote will see frozen frame
+          sender.replaceTrack(null).catch(console.error);
         }
       }
     }
@@ -230,5 +251,6 @@ export const useWebRTC = (socketRef, sessionId, isInitiator) => {
     toggleCam,
     startScreenShare,
     stopScreenShare,
+    stopAllMedia,
   };
 };

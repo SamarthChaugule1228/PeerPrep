@@ -21,6 +21,11 @@ const preferencesSchema = new mongoose.Schema({
     type: String,
     enum: ['Anonymous', 'Named'],
     default: 'Named'
+  },
+  rolePreference: {
+    type: String,
+    enum: ['candidate', 'interviewer'],
+    default: 'candidate'
   }
 }, { _id: false });
 

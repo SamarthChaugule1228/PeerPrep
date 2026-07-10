@@ -57,31 +57,33 @@ const initSocket = (server) => {
         waitingQueue.splice(waitingQueue.findIndex(q => q.userId.equals(match.user2.userId)), 1);
 
         try {
+          const user1Role = match.user1.preferences?.rolePreference === 'candidate' ? 'candidate' : 'interviewer';
+          const user2Role = user1Role === 'candidate' ? 'interviewer' : 'candidate';
+
           const session = await Session.create({
             participants: [
-              { user: match.user1.userId, socketId: match.user1.socketId, role: 'interviewer' },
-              { user: match.user2.userId, socketId: match.user2.socketId, role: 'candidate' }
+              { user: match.user1.userId, socketId: match.user1.socketId, role: user1Role },
+              { user: match.user2.userId, socketId: match.user2.socketId, role: user2Role }
             ]
           });
 
           const partner1 = getPartnerDetails(match.user2, match.user1.preferences.identityPreference);
           const partner2 = getPartnerDetails(match.user1, match.user2.preferences.identityPreference);
 
-          // Emit matched with partnerUserId
           io.to(match.user1.socketId).emit('matched', {
             sessionId: session._id,
             partner: partner1,
-            role: 'interviewer',
-            partnerUserId: match.user2.userId   // <-- added
+            role: user1Role,
+            partnerUserId: match.user2.userId
           });
           io.to(match.user2.socketId).emit('matched', {
             sessionId: session._id,
             partner: partner2,
-            role: 'candidate',
-            partnerUserId: match.user1.userId   // <-- added
+            role: user2Role,
+            partnerUserId: match.user1.userId
           });
 
-          console.log(`Matched: ${match.user1.name} ↔ ${match.user2.name}`);
+          console.log(`Matched: ${match.user1.name} (${user1Role}) ↔ ${match.user2.name} (${user2Role})`);
         } catch (err) {
           console.error('Session error:', err);
         }
@@ -95,6 +97,7 @@ const initSocket = (server) => {
     // ---------- FEATURE 2: INTERVIEW ROOM COLLABORATION ----------
     socket.on('join-room', async (sessionId) => {
       socket.join(sessionId);
+      socket.data.activeSessionId = sessionId;
       console.log(`${socket.user.name} joined room ${sessionId}`);
 
       try {
@@ -152,9 +155,15 @@ const initSocket = (server) => {
       await Session.findByIdAndUpdate(sessionId, { status: 'ended' });
     });
 
-    socket.on('leave-room', (sessionId) => {
-      socket.leave(sessionId);
-      console.log(`${socket.user.name} left room ${sessionId}`);
+    socket.on('leave-room', async ({ sessionId }) => {
+      const roomId = sessionId || socket.data.activeSessionId;
+      if (roomId) {
+        socket.leave(roomId);
+        socket.to(roomId).emit('partner-left');
+        await Session.findByIdAndUpdate(roomId, { status: 'ended' });
+      }
+      socket.data.activeSessionId = null;
+      console.log(`${socket.user.name} left room ${roomId || 'unknown'}`);
     });
 
     // ---------- FEATURE 3: WEBRTC SIGNALLING ----------
@@ -170,8 +179,13 @@ const initSocket = (server) => {
       socket.to(sessionId).emit('ice-candidate', candidate);
     });
 
-    socket.on('disconnect', () => {
+    socket.on('disconnect', async () => {
       removeFromQueue(socket.user._id);
+      const roomId = socket.data.activeSessionId;
+      if (roomId) {
+        socket.to(roomId).emit('partner-left');
+        await Session.findByIdAndUpdate(roomId, { status: 'ended' });
+      }
       console.log(`${socket.user.name} disconnected`);
     });
   });
@@ -184,18 +198,15 @@ function findMatch(currentUserId) {
   const current = waitingQueue.find(q => q.userId.equals(currentUserId));
   if (!current) return null;
 
+  const currentRole = current.preferences?.rolePreference || 'candidate';
+
   for (const other of waitingQueue) {
     if (other.userId.equals(currentUserId)) continue;
-    const p1 = current.preferences;
-    const p2 = other.preferences;
 
-    const isMatch =
-      p1.interviewType === p2.interviewType ||
-      p1.difficulty === p2.difficulty ||
-      (p1.targetCompany && p1.targetCompany === p2.targetCompany) ||
-      p1.preferredLanguage === p2.preferredLanguage;
+    const otherRole = other.preferences?.rolePreference || 'candidate';
+    if (currentRole === otherRole) continue;
 
-    if (isMatch) return { user1: current, user2: other };
+    return { user1: current, user2: other };
   }
   return null;
 }
