@@ -15,6 +15,19 @@ const sessionSchema = new mongoose.Schema({
   timerDuration: { type: Number, default: 2700 }, // 45 minutes in seconds
   timerEnd: { type: Date, default: null },
   status: { type: String, enum: ['active', 'ended'], default: 'active' },
+  
+  // Match type tracking
+  matchType: { type: String, enum: ['interviewer', 'peer'], default: 'interviewer' }, // interviewer = candidate+interviewer, peer = candidate+candidate
+  
+  // Interview details
+  interviewType: String, // e.g., 'DSA', 'HR', etc.
+  difficulty: String, // e.g., 'Beginner', 'Intermediate', 'Advanced'
+  
+  // For scheduled interviews
+  isScheduled: { type: Boolean, default: false },
+  scheduledStartTime: Date,
+  scheduledEndTime: Date,
+  
   createdAt: { type: Date, default: Date.now }
 });
 

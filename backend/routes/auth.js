@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
+const EmailService = require('../services/EmailService');
 const router = express.Router();
 
 // @route   POST /api/auth/register
@@ -16,6 +17,12 @@ router.post('/register', async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(password, salt);
     await user.save();
+
+    try {
+      await EmailService.sendWelcomeEmail(user.email, user.name);
+    } catch (emailErr) {
+      console.error('Register welcome email failed:', emailErr.message);
+    }
 
     const payload = { user: { id: user.id } };
     jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' }, (err, token) => {

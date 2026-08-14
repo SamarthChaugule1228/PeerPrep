@@ -1,243 +1,283 @@
-# PeerPrep 🚀
+# PeerPrep
 
-[![MERN](https://img.shields.io/badge/Stack-MERN-brightgreen)](https://www.mongodb.com/mern-stack)
-[![Vite](https://img.shields.io/badge/Vite-4.x-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
-[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.x-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
-[![WebRTC](https://img.shields.io/badge/WebRTC-Realtime-blue)](https://webrtc.org/)
-[![Socket.io](https://img.shields.io/badge/Socket.io-4.x-010101?logo=socket.io&logoColor=white)](https://socket.io/)
+A modern real-time mock interview platform for candidates who want to practice, improve, and get matched with interview partners instantly.
 
-**Real-time Peer-to-Peer Mock Interview Platform**
+[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-4-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Node.js](https://img.shields.io/badge/Node.js-Express-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![Socket.IO](https://img.shields.io/badge/Socket.IO-Real-time-010101?logo=socket.io&logoColor=white)](https://socket.io/)
+[![WebRTC](https://img.shields.io/badge/WebRTC-Video%20%26%20Audio-4A90E2)](https://webrtc.org/)
 
-Practice technical interviews with real partners instantly.  
-Match, code together, video-chat, share feedback, and read community interview experiences — all in one place.
-
-🌐 **Live App:** [https://peer-prep-gules.vercel.app](https://peer-prep-gules.vercel.app)  
-🐙 **GitHub Repo:** [SamarthChaugule1228/PeerPrep](https://github.com/SamarthChaugule1228/PeerPrep)
-
----
-
-## ✨ Features
-
-### 🔍 Smart Peer Matching
-- Match based on interview type, difficulty, target company, and preferred language
-- Real-time matching engine powered by Socket.IO
-- Anonymous or named identity preference
-
-### 💻 Shared Coding Interview Room
-- Collaborative Monaco Editor (Python, Java, C++)
-- Live code syncing between participants
-- Question panel (interviewer editable, candidate read-only)
-- Shared notes / whiteboard
-- Server-driven interview timer (15/30/45 min)
-
-### 🎥 Voice & Video Calls
-- WebRTC peer-to-peer audio and video
-- Screen sharing with dynamic full-screen expansion
-- Mute/unmute microphone and toggle camera controls
-- Connection status indicator
-
-### ⭐ Post-Session Feedback
-- Rate your partner on Communication, Technical, and Overall skills
-- Optional written note
-- Average ratings displayed on your dashboard
-
-### 📚 Public Interview Experience Board
-- Community-shared real interview stories
-- Rich-text editor (Tiptap) with bold, headings, lists, links, code blocks with syntax highlighting
-- Filter by company, college (IITs, NITs, etc.), interview type, difficulty
-- Upvote helpful posts, read counts
-- Dedicated detail page with rendered formatted content
-
-### 👤 User Profile
-- College selection (popular IITs, NITs + custom)
-- Degree, branch, year, graduation year
-- Dedicated profile page with edit toggle
-
-### 🌗 Dark Mode
-- Full dark mode support across all pages with toggle
-
-### 🏠 Homepage & Navigation
-- Modern landing page with feature highlights
-- Global header and footer
+PeerPrep helps users:
+- book or start live interview practice sessions
+- get matched with peers or interviewers in real time
+- collaborate in a shared coding environment
+- review feedback analytics and interview performance
+- share interview experiences with the community
+- manage their profile and interview schedule in one place
 
 ---
 
-## 🛠️ Tech Stack
+## Highlights
 
-**Frontend:** React, Vite, Tailwind CSS, Monaco Editor, Socket.IO Client, WebRTC, Tiptap  
-**Backend:** Node.js, Express, MongoDB (Mongoose), Socket.IO, JWT (jsonwebtoken + bcryptjs)  
-**Real-time:** WebRTC (peer-to-peer), Socket.IO (signalling & code sync)  
-**Database:** MongoDB Atlas  
-**Deployment:** Vercel (frontend), Railway (backend)
+### Practice Interview Flow
+- Dedicated Practice Interview page for instant matching
+- Match by type, difficulty, company focus, preferred language, and identity preference
+- Live waiting timer and redirect to the interview room when a match is found
+- Scheduled interview booking with validation and confirmation flow
+
+### Interview Room Experience
+- Real-time peer matching using Socket.IO
+- Shared coding environment for live interview sessions
+- Candidate and interviewer flow with session-based room routing
+- Interview timer and match status handling
+
+### Feedback & Performance Tracking
+- Post-session feedback form with communication, technical, and overall ratings
+- Feedback statistics page for the logged-in user
+- Better separation between experience sharing and analytics
+
+### Community Experience Board
+- Read and publish interview stories
+- Rich text editing for detailed experience posts
+- Filtering and reading experience detail pages
+- Upvote support for useful experiences
+
+### Profile & Dashboard
+- Personal dashboard with upcoming interviews and schedule visibility
+- Profile section with clean, modern card-based UI
+- Theme toggle with dark mode support across the app
 
 ---
 
-## 📁 Project Structure
+## Tech Stack
+
+### Frontend
+- React 18
+- Vite
+- Tailwind CSS
+- React Router
+- Socket.IO Client
+- WebRTC support via custom hook
+
+### Backend
+- Node.js
+- Express
+- MongoDB + Mongoose
+- JWT-based authentication
+- Socket.IO server
+- Nodemailer for email notifications
+
+### Core Features
+- Real-time matching
+- Interview scheduling logic
+- Feedback analytics
+- Experience publishing
+- Responsive dashboard and routing
+
+---
+
+## Project Structure
 
 ```text
 peerprep/
 ├── backend/
 │   ├── config/
-│   │   └── db.js                # MongoDB connection
+│   │   └── db.js
 │   ├── middleware/
-│   │   └── auth.js              # JWT verification middleware
+│   │   └── auth.js
 │   ├── models/
-│   │   ├── User.js              # User schema (with preferences & profile)
-│   │   ├── Session.js           # Interview session schema
-│   │   ├── Feedback.js          # Post-session feedback schema
-│   │   └── Experience.js        # Interview experience board schema
+│   │   ├── Experience.js
+│   │   ├── Feedback.js
+│   │   ├── MatchingRequest.js
+│   │   ├── Session.js
+│   │   └── User.js
 │   ├── routes/
-│   │   ├── auth.js              # Auth (register, login, profile/preferences update)
-│   │   ├── feedback.js          # Feedback CRUD + stats
-│   │   └── experiences.js       # Experience board CRUD, upvote, reads
+│   │   ├── auth.js
+│   │   ├── experiences.js
+│   │   ├── feedback.js
+│   │   └── matching.js
+│   ├── services/
+│   │   ├── EmailService.js
+│   │   └── MatchingService.js
 │   ├── socket/
-│   │   └── socket.js            # Socket.IO server (matching, code sync, WebRTC signalling)
+│   │   └── socket.js
 │   ├── .env
 │   ├── package.json
-│   └── server.js                # Express app entry point
+│   ├── server.js
+│   └── test-scheduled-flow.js
+│
 ├── frontend/
 │   ├── public/
 │   ├── src/
 │   │   ├── components/
-│   │   │   ├── Header.jsx
-│   │   │   ├── Footer.jsx
-│   │   │   ├── StarRating.jsx
 │   │   │   ├── FeedbackModal.jsx
+│   │   │   ├── Footer.jsx
+│   │   │   ├── Header.jsx
+│   │   │   ├── Navbar.jsx
+│   │   │   ├── PreferenceForm.jsx
 │   │   │   ├── ProfileForm.jsx
-│   │   │   └── RichTextEditor.jsx   # Tiptap editor
+│   │   │   ├── RichTextEditor.jsx
+│   │   │   ├── ScheduleInterviewModal.jsx
+│   │   │   └── StarRating.jsx
 │   │   ├── context/
 │   │   │   ├── AuthContext.jsx
 │   │   │   └── ThemeContext.jsx
 │   │   ├── hooks/
-│   │   │   └── useWebRTC.js         # WebRTC custom hook
+│   │   │   └── useWebRTC.js
 │   │   ├── pages/
-│   │   │   ├── Home.jsx
-│   │   │   ├── Login.jsx
-│   │   │   ├── Register.jsx
 │   │   │   ├── Dashboard.jsx
-│   │   │   ├── MatchRoom.jsx
-│   │   │   ├── Profile.jsx
+│   │   │   ├── ExperienceDetail.jsx
+│   │   │   ├── FeedbackPage.jsx
+│   │   │   ├── Home.jsx
 │   │   │   ├── InterviewExperiences.jsx
-│   │   │   └── ExperienceDetail.jsx
+│   │   │   ├── Login.jsx
+│   │   │   ├── MatchRoom.jsx
+│   │   │   ├── PracticeInterview.jsx
+│   │   │   ├── Profile.jsx
+│   │   │   ├── Register.jsx
+│   │   │   └── ScheduledInterviews.jsx
 │   │   ├── services/
-│   │   │   └── api.js               # Axios instance
+│   │   │   └── api.js
 │   │   ├── App.jsx
+│   │   ├── config.js
+│   │   ├── index.css
 │   │   ├── main.jsx
-│   │   ├── config.js                # Backend URL config
-│   │   └── index.css
+│   │   └── App.jsx
 │   ├── index.html
-│   ├── tailwind.config.js
-│   ├── vercel.json                # Vercel SPA rewrite rules
 │   ├── package.json
+│   ├── tailwind.config.js
+│   ├── vercel.json
 │   └── vite.config.js
-└── README.md
+│
+├── EMAIL_SETUP.md
+├── INTERVIEW_GUIDE/
+├── AUTO_JOIN_FEATURE.md
+├── FALLBACK_MATCHING_IMPLEMENTATION.md
+├── INTERVIEW_CONNECTION_FLOW.md
+├── INTERVIEW_NOTES.md
+├── SCHEDULED_INTERVIEWS_IMPLEMENTATION.md
+├── package.json
+├── README.md
+└── .gitignore
 ```
 
 ---
 
-## ⚙️ Getting Started (Local Development)
+## Local Setup
 
 ### Prerequisites
-- Node.js (v16+)
-- MongoDB Atlas connection string (or local MongoDB)
+- Node.js 18+
+- MongoDB instance or MongoDB Atlas connection
+- Git
 
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/SamarthChaugule1228/PeerPrep.git
-cd PeerPrep
-```
-
-### 2. Backend Setup
+### 1. Install backend dependencies
 
 ```bash
 cd backend
 npm install
 ```
 
-Create a `.env` file in `backend/` with:
+### 2. Configure environment variables
+
+Create a `.env` file inside `backend/` with:
 
 ```env
 PORT=5000
-MONGO_URI=your_mongodb_connection_string
+MONGO_URI=your_mongodb_uri
 JWT_SECRET=your_jwt_secret
+EMAIL_USER=your_gmail_address@gmail.com
+EMAIL_PASSWORD=your_gmail_app_password
+FRONTEND_URL=http://localhost:5173
 ```
 
-Start the server:
+> For Gmail, use a 16-character app password, not your normal account password.
+
+### 3. Start the backend
 
 ```bash
 npm run dev
 ```
 
-### 3. Frontend Setup
+### 4. Install frontend dependencies
 
 ```bash
 cd ../frontend
 npm install
 ```
 
-Create a `src/config.js` file with the backend URL (or set `VITE_BACKEND_URL` env variable):
-
-```js
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
-export default BACKEND_URL;
-```
-
-Start the development server:
+### 5. Start the frontend
 
 ```bash
 npm run dev
 ```
 
-### 4. Access the app
+Open the app in your browser at:
 
-Open [http://localhost:5173](http://localhost:5173) in your browser.
-
----
-
-## 🚀 Deployment
-
-### Backend (Railway)
-
-1. Push your code to GitHub.
-2. On [Railway](https://railway.app), deploy a new service from your repo.
-3. Set Root Directory to `backend`.
-4. Add environment variables: `MONGO_URI`, `JWT_SECRET`.
-5. Get your public Railway URL.
-
-### Frontend (Vercel)
-
-1. Push your code to GitHub.
-2. On [Vercel](https://vercel.com), import the repo.
-3. Set Root Directory to `frontend`, Framework to `Vite`.
-4. Add environment variable: `VITE_BACKEND_URL` = your Railway URL.
-5. Deploy!
+```text
+http://localhost:5173
+```
 
 ---
 
-## 🤝 Contributing
+## Main App Routes
 
-Contributions, issues, and feature requests are welcome!  
-Feel free to check the [issues page](https://github.com/SamarthChaugule1228/PeerPrep/issues).
-
----
-
-## 📜 License
-
-This project is [MIT](LICENSE) licensed.
-
----
-
-## 🙏 Acknowledgements
-
-- [Monaco Editor](https://microsoft.github.io/monaco-editor/)
-- [Tiptap](https://tiptap.dev/)
-- [Socket.IO](https://socket.io/)
-- [WebRTC](https://webrtc.org/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [Vite](https://vitejs.dev/)
-- [Render](https://render.com) / [Railway](https://railway.app) / [Vercel](https://vercel.com)
+- `/` — landing page
+- `/login` — login
+- `/register` — signup
+- `/dashboard` — overview and interview status
+- `/profile` — user profile management
+- `/find-interview` — instant practice interview matching
+- `/my-interviews` — scheduled interview list
+- `/feedback` — feedback analytics
+- `/experiences` — interview experiences board
+- `/matchroom/:sessionId` — live interview room
 
 ---
 
-Made with ❤️ by [Samarth Chaugule](https://github.com/SamarthChaugule1228)
+## Email Setup
+
+The app includes automatic email notifications for:
+- schedule confirmation
+- match notification when a peer/interviewer is found
+
+For details, see [EMAIL_SETUP.md](EMAIL_SETUP.md).
+
+---
+
+## Notes
+
+- The frontend has been designed with a cleaner route structure and dedicated pages for Practice Interview, Feedback, and Experiences.
+- Dark mode support is built into the global theme context.
+- The app is ready for local development and deployment with Vercel + backend hosting.
+
+---
+
+## Build Status
+
+The frontend production build has been verified successfully with Vite.
+
+```bash
+cd frontend
+npm run build
+```
+
+---
+
+## License
+
+This project is currently licensed as a private project for the team and is not intended for public redistribution unless explicitly approved.
+
+---
+
+## Acknowledgements
+
+- React
+- Vite
+- Tailwind CSS
+- Node.js
+- Socket.IO
+- MongoDB
+- WebRTC
+- Nodemailer

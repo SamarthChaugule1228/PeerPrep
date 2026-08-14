@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation, Link, useNavigate } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import { io } from 'socket.io-client';
+import { Moon, SunMedium } from 'lucide-react';
 import { useWebRTC } from '../hooks/useWebRTC';
-import FeedbackModal from '../components/FeedbackModal';   // <-- added
+import FeedbackModal from '../components/FeedbackModal';
+import { useTheme } from '../context/ThemeContext';
 import BACKEND_URL from '../config';
 
 const MatchRoom = () => {
@@ -12,9 +14,14 @@ const MatchRoom = () => {
   const navigate = useNavigate();
   const partner = location.state?.partner;
   const role = location.state?.role || 'candidate';
-  const partnerUserId = location.state?.partnerUserId;   // <-- added
+  const partnerUserId = location.state?.partnerUserId;
+  const matchType = location.state?.matchType || 'interviewer';
+  const message = location.state?.message || '';
+  const autoJoined = location.state?.autoJoined || false;
+  const autoStartTimer = location.state?.autoStartTimer || false;
 
   const socketRef = useRef(null);
+  const { darkMode, toggleTheme } = useTheme();
 
   // Room state
   const [code, setCode] = useState('');
@@ -28,7 +35,7 @@ const MatchRoom = () => {
   const [showVideoPanel, setShowVideoPanel] = useState(true);
 
   // Feedback modal state
-  const [showFeedback, setShowFeedback] = useState(false);   // <-- added
+  const [showFeedback, setShowFeedback] = useState(false);
   const [partnerLeft, setPartnerLeft] = useState(false);
 
   // Connect socket and join room
@@ -89,6 +96,18 @@ const MatchRoom = () => {
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
   }, [timerEnd]);
+
+  // Auto-start timer if this was an auto-joined interview
+  useEffect(() => {
+    if (autoStartTimer && !timerEnd && socketRef.current?.connected) {
+      // Wait a second to ensure connection is stable, then start 60-min timer
+      const timeout = setTimeout(() => {
+        console.log('Auto-starting 60-minute interview timer');
+        startTimer(60);
+      }, 1000);
+      return () => clearTimeout(timeout);
+    }
+  }, [autoStartTimer, timerEnd]);
 
   // Emitters
   const emitCode = (val) => socketRef.current?.emit('code-change', { sessionId, code: val });
@@ -194,6 +213,15 @@ const MatchRoom = () => {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-indigo-400 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              >
+                {darkMode ? <SunMedium size={16} /> : <Moon size={16} />}
+                {darkMode ? 'Light' : 'Dark'}
+              </button>
+
               {timerDisplay && (
                 <div className={`rounded-full px-3 py-1.5 font-mono text-sm font-semibold ${status === 'active' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300'}`}>
                   {timerDisplay}
@@ -217,6 +245,34 @@ const MatchRoom = () => {
             </div>
           </div>
         </header>
+
+        {message && (
+          <div className={`mx-4 mt-4 rounded-2xl px-4 py-3 text-sm shadow-sm border ${
+            matchType === 'peer'
+              ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/50 dark:bg-blue-950/40 dark:text-blue-300'
+              : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300'
+          }`}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="font-semibold">{message}</span>
+              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                matchType === 'peer'
+                  ? 'bg-blue-200/50 text-blue-900 dark:bg-blue-900/50 dark:text-blue-300'
+                  : 'bg-emerald-200/50 text-emerald-900 dark:bg-emerald-900/50 dark:text-emerald-300'
+              }`}>
+                {matchType === 'peer' ? '👥 Peer Practice' : '👨‍💼 Interview'}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {autoJoined && (
+          <div className="mx-4 mt-3 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 shadow-sm dark:border-green-900/50 dark:bg-green-950/40 dark:text-green-300">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">✨</span>
+              <span className="font-semibold">You've been automatically connected! Timer is starting...</span>
+            </div>
+          </div>
+        )}
 
         {partnerLeft && (
           <div className="mx-4 mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 shadow-sm dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300">

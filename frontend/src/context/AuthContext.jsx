@@ -8,6 +8,7 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const isAuthenticated = Boolean(user);
 
   const loadUser = async () => {
     const token = localStorage.getItem('token');
@@ -52,12 +53,14 @@ export const AuthProvider = ({ children }) => {
 
   const updatePreferences = async (prefs) => {
     const res = await api.put('/auth/preferences', prefs);
-    setUser((prev) => ({ ...prev, preferences: res.data }));
+    const updatedPrefs = res.data || prefs;
+    setUser((prev) => (prev ? { ...prev, preferences: updatedPrefs } : prev));
+    return updatedPrefs;
   };
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, register, logout, updatePreferences }}
+      value={{ user, loading, isAuthenticated, login, register, logout, updatePreferences }}
     >
       {children}
     </AuthContext.Provider>

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import FeaturesRulesModal from '../components/FeaturesRulesModal';
 
 const Register = () => {
   const [name, setName] = useState('');
@@ -8,6 +9,7 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showFeaturesModal, setShowFeaturesModal] = useState(true);
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -92,6 +94,9 @@ const Register = () => {
           </Link>
         </p>
       </div>
+      {showFeaturesModal && (
+        <FeaturesRulesModal onClose={() => setShowFeaturesModal(false)} />
+      )}
     </div>
   );
 };

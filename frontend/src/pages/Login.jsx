@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import FeaturesRulesModal from '../components/FeaturesRulesModal';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showFeaturesModal, setShowFeaturesModal] = useState(true);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -79,6 +81,9 @@ const Login = () => {
           </Link>
         </p>
       </div>
+      {showFeaturesModal && (
+        <FeaturesRulesModal onClose={() => setShowFeaturesModal(false)} />
+      )}
     </div>
   );
 };
