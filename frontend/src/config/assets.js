@@ -1,46 +1,63 @@
 /**
  * Asset Configuration
- * Centralized import paths for all images and assets
+ * Centralized imported URLs for all images and assets.
  */
+
+import heroDevelopers from '../assets/illustrations/hero-developers-collaboration.png';
+import matchingAvatars from '../assets/illustrations/matching-avatars-connecting.png';
+import waitingInterviewer from '../assets/illustrations/waiting-interviewer-calendar.png';
+import unavailableInterviewer from '../assets/illustrations/unavailable-interviewer-handshake.png';
+import celebration from '../assets/illustrations/celebration-partnership-high-five.png';
+
+import logoIcon from '../assets/logos/logo-peerprep-icon.png';
+import logoHorizontal from '../assets/logos/logo-peerprep-horizontal.png';
+import logoHorizontalWhite from '../assets/logos/logo-peerprep-horizontal-white.png';
+
+import avatarFemalePlaceholder1 from '../assets/avatars/avatar-placeholder-female-1.png';
+import avatarMalePlaceholder1 from '../assets/avatars/avatar-placeholder-male-1.png';
+import avatarNeutral from '../assets/avatars/avatar-placeholder-neutral.png';
+
+import heroGradient from '../assets/backgrounds/bg-gradient-hero-purple-blue.png';
+import particles from '../assets/backgrounds/bg-particles-animated.png';
 
 export const ASSETS = {
   illustrations: {
-    heroDevelopers: '/src/assets/illustrations/hero-developers-collaboration.png',
-    matchingAvatars: '/src/assets/illustrations/matching-avatars-connecting.png',
-    waitingInterviewer: '/src/assets/illustrations/waiting-interviewer-calendar.png',
-    unavailableInterviewer: '/src/assets/illustrations/unavailable-interviewer-handshake.png',
-    celebration: '/src/assets/illustrations/celebration-partnership-high-five.png',
-    interviewRoom: '/src/assets/illustrations/interview-room-setup.png',
-    profileEditing: '/src/assets/illustrations/profile-editing-illustration.png',
-    feedbackStars: '/src/assets/illustrations/feedback-stars-rating.png',
-    notFound: '/src/assets/illustrations/404-not-found-illustration.png',
-    emptyState: '/src/assets/illustrations/empty-state-no-interviews.png',
+    heroDevelopers,
+    matchingAvatars,
+    waitingInterviewer,
+    unavailableInterviewer,
+    celebration,
+    interviewRoom: heroDevelopers,
+    profileEditing: heroDevelopers,
+    feedbackStars: celebration,
+    notFound: heroDevelopers,
+    emptyState: matchingAvatars,
   },
 
   logos: {
-    icon: '/src/assets/logos/logo-peerprep-icon.png',
-    iconWhite: '/src/assets/logos/logo-peerprep-icon-white.png',
-    horizontal: '/src/assets/logos/logo-peerprep-horizontal.png',
-    horizontalWhite: '/src/assets/logos/logo-peerprep-horizontal-white.png',
-    vertical: '/src/assets/logos/logo-peerprep-vertical.png',
+    icon: logoIcon,
+    iconWhite: logoIcon,
+    horizontal: logoHorizontal,
+    horizontalWhite: logoHorizontalWhite,
+    vertical: logoHorizontal,
   },
 
   avatars: {
-    malePlaceholder1: '/src/assets/avatars/avatar-placeholder-male-1.png',
-    malePlaceholder2: '/src/assets/avatars/avatar-placeholder-male-2.png',
-    femalePlaceholder1: '/src/assets/avatars/avatar-placeholder-female-1.png',
-    femalePlaceholder2: '/src/assets/avatars/avatar-placeholder-female-2.png',
-    neutral: '/src/assets/avatars/avatar-placeholder-neutral.png',
-    defaultIcon: '/src/assets/avatars/avatar-default-icon.svg',
-    interviewerBadge: '/src/assets/avatars/avatar-interviewer-badge.svg',
+    malePlaceholder1: avatarMalePlaceholder1,
+    malePlaceholder2: avatarMalePlaceholder1,
+    femalePlaceholder1: avatarFemalePlaceholder1,
+    femalePlaceholder2: avatarFemalePlaceholder1,
+    neutral: avatarNeutral,
+    defaultIcon: avatarNeutral,
+    interviewerBadge: avatarNeutral,
   },
 
   backgrounds: {
-    heroGradient: '/src/assets/backgrounds/bg-gradient-hero-purple-blue.svg',
-    cardGradient: '/src/assets/backgrounds/bg-gradient-card-dark.svg',
-    particles: '/src/assets/backgrounds/bg-particles-animated.svg',
-    gridPattern: '/src/assets/backgrounds/bg-grid-pattern.svg',
-    blobs: '/src/assets/backgrounds/bg-blob-shapes.svg',
+    heroGradient,
+    cardGradient: heroGradient,
+    particles,
+    gridPattern: particles,
+    blobs: particles,
   },
 };
 
