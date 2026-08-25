@@ -1,283 +1,191 @@
 # PeerPrep
 
-A modern real-time mock interview platform for candidates who want to practice, improve, and get matched with interview partners instantly.
+PeerPrep is a full-stack mock interview platform for matching with peers or interviewers, running live practice sessions, sharing interview experiences, and tracking feedback.
 
-[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-4-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
-[![Node.js](https://img.shields.io/badge/Node.js-Express-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/)
-[![Socket.IO](https://img.shields.io/badge/Socket.IO-Real-time-010101?logo=socket.io&logoColor=white)](https://socket.io/)
-[![WebRTC](https://img.shields.io/badge/WebRTC-Video%20%26%20Audio-4A90E2)](https://webrtc.org/)
+The application has a React/Vite frontend and an Express, MongoDB, and Socket.IO backend. Live sessions use WebRTC for audio, video, and screen sharing, while Socket.IO synchronizes the interview room and matching updates.
 
-PeerPrep helps users:
-- book or start live interview practice sessions
-- get matched with peers or interviewers in real time
-- collaborate in a shared coding environment
-- review feedback analytics and interview performance
-- share interview experiences with the community
-- manage their profile and interview schedule in one place
+## Features
 
----
+- Register, sign in, and manage a profile and interview preferences.
+- Start an instant interview search with preferences for interview type, difficulty, company, language, identity, and role.
+- Schedule an interview with a preferred time window.
+- Match candidates with interviewers when available, with peer-practice fallback for unmatched requests.
+- Join a live interview room with synchronized questions, code, language, timer, private notes, video, audio, and screen sharing.
+- Submit post-interview ratings and view feedback averages.
+- Create, browse, filter, read, and upvote community interview experiences.
+- Use light or dark theme preferences in the frontend.
 
-## Highlights
+## Stack
 
-### Practice Interview Flow
-- Dedicated Practice Interview page for instant matching
-- Match by type, difficulty, company focus, preferred language, and identity preference
-- Live waiting timer and redirect to the interview room when a match is found
-- Scheduled interview booking with validation and confirmation flow
+| Area | Technologies |
+| --- | --- |
+| Frontend | React 18, Vite, React Router, Tailwind CSS, Axios, Socket.IO Client, Monaco Editor, Tiptap |
+| Backend | Node.js, Express, MongoDB, Mongoose, Socket.IO, JWT, bcryptjs, Nodemailer |
+| Live media | WebRTC browser APIs |
 
-### Interview Room Experience
-- Real-time peer matching using Socket.IO
-- Shared coding environment for live interview sessions
-- Candidate and interviewer flow with session-based room routing
-- Interview timer and match status handling
-
-### Feedback & Performance Tracking
-- Post-session feedback form with communication, technical, and overall ratings
-- Feedback statistics page for the logged-in user
-- Better separation between experience sharing and analytics
-
-### Community Experience Board
-- Read and publish interview stories
-- Rich text editing for detailed experience posts
-- Filtering and reading experience detail pages
-- Upvote support for useful experiences
-
-### Profile & Dashboard
-- Personal dashboard with upcoming interviews and schedule visibility
-- Profile section with clean, modern card-based UI
-- Theme toggle with dark mode support across the app
-
----
-
-## Tech Stack
-
-### Frontend
-- React 18
-- Vite
-- Tailwind CSS
-- React Router
-- Socket.IO Client
-- WebRTC support via custom hook
-
-### Backend
-- Node.js
-- Express
-- MongoDB + Mongoose
-- JWT-based authentication
-- Socket.IO server
-- Nodemailer for email notifications
-
-### Core Features
-- Real-time matching
-- Interview scheduling logic
-- Feedback analytics
-- Experience publishing
-- Responsive dashboard and routing
-
----
-
-## Project Structure
+## Repository Layout
 
 ```text
 peerprep/
-├── backend/
-│   ├── config/
-│   │   └── db.js
-│   ├── middleware/
-│   │   └── auth.js
-│   ├── models/
-│   │   ├── Experience.js
-│   │   ├── Feedback.js
-│   │   ├── MatchingRequest.js
-│   │   ├── Session.js
-│   │   └── User.js
-│   ├── routes/
-│   │   ├── auth.js
-│   │   ├── experiences.js
-│   │   ├── feedback.js
-│   │   └── matching.js
-│   ├── services/
-│   │   ├── EmailService.js
-│   │   └── MatchingService.js
-│   ├── socket/
-│   │   └── socket.js
-│   ├── .env
-│   ├── package.json
-│   ├── server.js
-│   └── test-scheduled-flow.js
-│
-├── frontend/
-│   ├── public/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── FeedbackModal.jsx
-│   │   │   ├── Footer.jsx
-│   │   │   ├── Header.jsx
-│   │   │   ├── Navbar.jsx
-│   │   │   ├── PreferenceForm.jsx
-│   │   │   ├── ProfileForm.jsx
-│   │   │   ├── RichTextEditor.jsx
-│   │   │   ├── ScheduleInterviewModal.jsx
-│   │   │   └── StarRating.jsx
-│   │   ├── context/
-│   │   │   ├── AuthContext.jsx
-│   │   │   └── ThemeContext.jsx
-│   │   ├── hooks/
-│   │   │   └── useWebRTC.js
-│   │   ├── pages/
-│   │   │   ├── Dashboard.jsx
-│   │   │   ├── ExperienceDetail.jsx
-│   │   │   ├── FeedbackPage.jsx
-│   │   │   ├── Home.jsx
-│   │   │   ├── InterviewExperiences.jsx
-│   │   │   ├── Login.jsx
-│   │   │   ├── MatchRoom.jsx
-│   │   │   ├── PracticeInterview.jsx
-│   │   │   ├── Profile.jsx
-│   │   │   ├── Register.jsx
-│   │   │   └── ScheduledInterviews.jsx
-│   │   ├── services/
-│   │   │   └── api.js
-│   │   ├── App.jsx
-│   │   ├── config.js
-│   │   ├── index.css
-│   │   ├── main.jsx
-│   │   └── App.jsx
-│   ├── index.html
-│   ├── package.json
-│   ├── tailwind.config.js
-│   ├── vercel.json
-│   └── vite.config.js
-│
-├── EMAIL_SETUP.md
-├── INTERVIEW_GUIDE/
-├── AUTO_JOIN_FEATURE.md
-├── FALLBACK_MATCHING_IMPLEMENTATION.md
-├── INTERVIEW_CONNECTION_FLOW.md
-├── INTERVIEW_NOTES.md
-├── SCHEDULED_INTERVIEWS_IMPLEMENTATION.md
-├── package.json
-├── README.md
-└── .gitignore
+|-- backend/                 # Express API, Socket.IO server, MongoDB models, matching services
+|-- frontend/                # React/Vite single-page application
+|   |-- src/assets/          # Images imported and fingerprinted by Vite builds
+|   |-- src/components/      # Reusable UI and feature components
+|   |-- src/pages/           # Application route views
+|   |-- src/services/        # HTTP client configuration
+|   `-- vercel.json          # SPA rewrite configuration for Vercel
+|-- EMAIL_SETUP.md           # Gmail App Password email configuration details
+`-- README.md
 ```
 
----
+## Prerequisites
 
-## Local Setup
+- Node.js 18 or later
+- npm
+- A MongoDB database, local or Atlas
+- A modern browser with camera, microphone, and screen-sharing permissions for live sessions
 
-### Prerequisites
-- Node.js 18+
-- MongoDB instance or MongoDB Atlas connection
-- Git
+## Local Development
 
-### 1. Install backend dependencies
+Install and run the backend and frontend in separate terminals.
+
+### 1. Configure the backend
 
 ```bash
 cd backend
 npm install
 ```
 
-### 2. Configure environment variables
-
-Create a `.env` file inside `backend/` with:
+Create `backend/.env`:
 
 ```env
 PORT=5000
-MONGO_URI=your_mongodb_uri
-JWT_SECRET=your_jwt_secret
-EMAIL_USER=your_gmail_address@gmail.com
-EMAIL_PASSWORD=your_gmail_app_password
+MONGO_URI=mongodb_connection_string
+JWT_SECRET=long_random_secret
 FRONTEND_URL=http://localhost:5173
+
+# Optional: enables welcome, scheduling, and match notification emails.
+EMAIL_USER=your_gmail_address@gmail.com
+EMAIL_PASSWORD=your_16_character_gmail_app_password
 ```
 
-> For Gmail, use a 16-character app password, not your normal account password.
+`MONGO_URI` and `JWT_SECRET` are required. Email credentials are optional; without them the server continues to run and email notifications are skipped. See [EMAIL_SETUP.md](EMAIL_SETUP.md) for Gmail configuration details.
 
-### 3. Start the backend
+Start the API and Socket.IO server:
 
 ```bash
 npm run dev
 ```
 
-### 4. Install frontend dependencies
+The backend listens on `http://localhost:5000` by default. `GET /` returns `API running` as a basic health check.
+
+### 2. Configure the frontend
 
 ```bash
 cd ../frontend
 npm install
 ```
 
-### 5. Start the frontend
+For local development, no frontend environment file is required because the app defaults to `http://localhost:5000` and Vite proxies `/api` there. To target a different backend, create `frontend/.env.local`:
+
+```env
+VITE_BACKEND_URL=https://your-backend.example.com
+```
+
+Start Vite:
 
 ```bash
 npm run dev
 ```
 
-Open the app in your browser at:
+Open `http://localhost:5173`.
 
-```text
-http://localhost:5173
-```
-
----
-
-## Main App Routes
-
-- `/` — landing page
-- `/login` — login
-- `/register` — signup
-- `/dashboard` — overview and interview status
-- `/profile` — user profile management
-- `/find-interview` — instant practice interview matching
-- `/my-interviews` — scheduled interview list
-- `/feedback` — feedback analytics
-- `/experiences` — interview experiences board
-- `/matchroom/:sessionId` — live interview room
-
----
-
-## Email Setup
-
-The app includes automatic email notifications for:
-- schedule confirmation
-- match notification when a peer/interviewer is found
-
-For details, see [EMAIL_SETUP.md](EMAIL_SETUP.md).
-
----
-
-## Notes
-
-- The frontend has been designed with a cleaner route structure and dedicated pages for Practice Interview, Feedback, and Experiences.
-- Dark mode support is built into the global theme context.
-- The app is ready for local development and deployment with Vercel + backend hosting.
-
----
-
-## Build Status
-
-The frontend production build has been verified successfully with Vite.
+## Production Build
 
 ```bash
 cd frontend
 npm run build
 ```
 
----
+Vite writes the production application to `frontend/dist`. Image URLs in `src/config/assets.js` are ES module imports, so Vite emits their hashed production files to `dist/assets` and rewrites their references during the build.
+
+Preview a completed build locally with:
+
+```bash
+npm run preview
+```
+
+## Deployment
+
+Deploy the frontend as a static Vite site and set `VITE_BACKEND_URL` to the public URL of the backend. The supplied `frontend/vercel.json` handles single-page-app route rewrites on Vercel.
+
+Deploy the backend to a host that supports a persistent Node.js process and WebSocket connections. The backend runs Socket.IO and in-process matching jobs: scheduled fallback checks run every minute and expired instant requests are cleaned up every five minutes. A purely serverless deployment is not suitable without moving those responsibilities to durable external services.
+
+Set these backend environment variables in the host:
+
+```env
+PORT=5000
+MONGO_URI=mongodb_connection_string
+JWT_SECRET=long_random_secret
+FRONTEND_URL=https://your-frontend.example.com
+EMAIL_USER=your_gmail_address@gmail.com
+EMAIL_PASSWORD=your_gmail_app_password
+```
+
+Use HTTPS in production. Browser camera, microphone, screen sharing, and WebRTC behavior depend on a secure context.
+
+## Application Routes
+
+| Route | Access | Purpose |
+| --- | --- | --- |
+| `/` | Public | Home page |
+| `/login` | Public | Sign in |
+| `/register` | Public | Create an account |
+| `/dashboard` | Authenticated | Interview overview |
+| `/find-interview` | Authenticated | Instant and scheduled matching flow |
+| `/my-interviews`, `/scheduled-interviews` | Authenticated | Upcoming scheduled interviews |
+| `/matchroom/:sessionId` | Authenticated | Live interview room |
+| `/feedback` | Authenticated | Feedback analytics |
+| `/profile`, `/settings` | Authenticated | Profile management |
+| `/experiences`, `/interview-experiences` | Public | Community interview experiences |
+| `/experiences/:id` | Public | Experience detail |
+
+## API Overview
+
+All protected API requests require the JWT in the `x-auth-token` header. The frontend adds this header from local storage automatically.
+
+| Group | Endpoints |
+| --- | --- |
+| Authentication | `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/user`, `PUT /api/auth/preferences`, `PUT /api/auth/profile` |
+| Matching | `POST /api/matching/instant`, `POST /api/matching/scheduled`, `POST /api/matching/try-match/:requestId`, `GET /api/matching/request/:requestId`, `POST /api/matching/cancel/:requestId`, `GET /api/matching/active`, `GET /api/matching/scheduled-list` |
+| Feedback | `POST /api/feedback`, `GET /api/feedback/stats` |
+| Experiences | `POST /api/experiences`, `GET /api/experiences`, `GET /api/experiences/:id`, `POST /api/experiences/:id/upvote` |
+
+## Matching Behavior
+
+- Instant searches attempt an immediate compatible match. If no direct match is found, the Socket.IO flow performs a peer fallback attempt after 30 seconds. Old instant requests expire after one hour.
+- Scheduled searches first look for an interviewer. Two hours before the scheduled start, unmatched requests become eligible for peer fallback.
+- The backend broadcasts matching and fallback updates through Socket.IO. A signed-in user must connect with their JWT in the Socket.IO handshake.
+
+## Verification
+
+The frontend build can be checked with:
+
+```bash
+cd frontend
+npm run build
+```
+
+There is no automated test command configured in `package.json`. `backend/test-scheduled-flow.js` is a manual database exercise that creates and changes matching records; do not run it against production data.
+
+## Additional Documentation
+
+- [EMAIL_SETUP.md](EMAIL_SETUP.md): Configure Gmail App Password notifications.
+- [AUTO_JOIN_FEATURE.md](AUTO_JOIN_FEATURE.md): Match-room auto-join behavior.
+- [FALLBACK_MATCHING_IMPLEMENTATION.md](FALLBACK_MATCHING_IMPLEMENTATION.md): Scheduled matching fallback design.
+- [INTERVIEW_CONNECTION_FLOW.md](INTERVIEW_CONNECTION_FLOW.md): Interview connection flow.
+- [SCHEDULED_INTERVIEWS_IMPLEMENTATION.md](SCHEDULED_INTERVIEWS_IMPLEMENTATION.md): Scheduled interview implementation notes.
 
 ## License
 
-This project is currently licensed as a private project for the team and is not intended for public redistribution unless explicitly approved.
-
----
-
-## Acknowledgements
-
-- React
-- Vite
-- Tailwind CSS
-- Node.js
-- Socket.IO
-- MongoDB
-- WebRTC
-- Nodemailer
+This repository does not declare an open-source license. Treat it as private unless the project owners provide one.
